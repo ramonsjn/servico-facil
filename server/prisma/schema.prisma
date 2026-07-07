@@ -1,0 +1,93 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  PRESTADOR
+  CLIENTE
+}
+
+enum ContractStatus {
+  PENDENTE
+  EM_ANDAMENTO
+  CONCLUIDO
+  CANCELADO
+}
+
+model User {
+  id        String   @id @default(uuid())
+  nome      String
+  email     String   @unique
+  telefone  String?
+  senha     String
+  role      UserRole @default(CLIENTE)
+  avatarUrl String?
+  descricao String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  servicos  Service[]
+  reviews   Review[]
+  contratos Contract[]
+
+  @@map("users")
+}
+
+model Service {
+  id          String   @id @default(uuid())
+  titulo      String
+  descricao   String
+  preco       Float
+  categoria   String
+  fotos       String[]
+  disponivel  Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  prestadorId String
+  prestador   User     @relation(fields: [prestadorId], references: [id], onDelete: Cascade)
+
+  reviews     Review[]
+  contratos   Contract[]
+
+  @@map("services")
+}
+
+model Review {
+  id        String   @id @default(uuid())
+  nota      Int
+  comentario String?
+  fotos     String[]
+  createdAt DateTime @default(now())
+
+  clienteId  String
+  cliente    User   @relation(fields: [clienteId], references: [id], onDelete: Cascade)
+
+  servicoId  String
+  servico    Service @relation(fields: [servicoId], references: [id], onDelete: Cascade)
+
+  @@unique([clienteId, servicoId])
+  @@map("reviews")
+}
+
+model Contract {
+  id          String         @id @default(uuid())
+  status      ContractStatus @default(PENDENTE)
+  mensagem    String?
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+
+  clienteId  String
+  cliente    User    @relation(fields: [clienteId], references: [id], onDelete: Cascade)
+
+  prestadorId String
+  servicoId   String
+  servico     Service @relation(fields: [servicoId], references: [id], onDelete: Cascade)
+
+  @@map("contracts")
+}
