@@ -34,11 +34,6 @@ export async function updatePassword(req: AuthRequest, res: Response) {
     const { senhaAtual, novaSenha } = req.body;
     const userId = req.user!.userId;
 
-    if (!novaSenha || novaSenha.length < 6) {
-      res.status(400).json({ error: "Nova senha deve ter no mínimo 6 caracteres" });
-      return;
-    }
-
     const user = await prisma.user.findUnique({ where: { id: userId } });
     if (!user) {
       res.status(404).json({ error: "Usuário não encontrado" });
@@ -99,6 +94,36 @@ export async function getProfile(req: AuthRequest, res: Response) {
     res.json(user);
   } catch (error) {
     console.error("Erro ao buscar perfil:", error);
+    res.status(500).json({ error: "Erro interno do servidor" });
+  }
+}
+
+export async function uploadAvatar(req: AuthRequest, res: Response) {
+  try {
+    const userId = req.user!.userId;
+
+    if (!req.file) {
+      res.status(400).json({ error: "Nenhuma imagem enviada" });
+      return;
+    }
+
+    const avatarUrl = req.file.filename;
+
+    const user = await prisma.user.update({
+      where: { id: userId },
+      data: { avatarUrl },
+      select: {
+        id: true,
+        nome: true,
+        email: true,
+        avatarUrl: true,
+        role: true,
+      },
+    });
+
+    res.json(user);
+  } catch (error) {
+    console.error("Erro ao atualizar avatar:", error);
     res.status(500).json({ error: "Erro interno do servidor" });
   }
 }

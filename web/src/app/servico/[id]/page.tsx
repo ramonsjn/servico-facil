@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
-import { Star, ArrowLeft, Send, AlertCircle } from "lucide-react";
+import { Star, ArrowLeft, Send, AlertCircle, Pencil } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -23,6 +23,7 @@ import { Label } from "@/components/ui/label";
 import { useSession } from "next-auth/react";
 import { api } from "@/lib/api";
 import { toast } from "sonner";
+import { PhotoGallery } from "@/components/shared/photo-gallery";
 
 interface ServicoData {
   id: string;
@@ -62,7 +63,7 @@ export default function ServicoDetalhePage() {
         const service = await api.get<ServicoData>(`/servicos/${params.id}`);
         setData(service);
       } catch (err) {
-        setError(err instanceof Error ? err.message : "Erro ao carregar serviço");
+        setError(err instanceof Error ? err.message : "Erro ao carregar servico");
         setData(null);
       } finally {
         setLoading(false);
@@ -81,6 +82,7 @@ export default function ServicoDetalhePage() {
       await api.post(`/contratos/servico/${params.id}`, { mensagem });
       setSolicitarOpen(false);
       setMensagem("");
+      toast.success("Solicitacao enviada!");
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Erro ao solicitar");
     } finally {
@@ -112,7 +114,7 @@ export default function ServicoDetalhePage() {
     return (
       <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 text-center">
         <AlertCircle className="h-12 w-12 mx-auto mb-4 text-destructive/50" />
-        <p className="text-muted-foreground">{error || "Serviço não encontrado."}</p>
+        <p className="text-muted-foreground">{error || "Servico nao encontrado."}</p>
         <Link href="/">
           <Button variant="outline" className="mt-4">Voltar</Button>
         </Link>
@@ -129,13 +131,7 @@ export default function ServicoDetalhePage() {
 
       <div className="grid gap-8 lg:grid-cols-3">
         <div className="lg:col-span-2 space-y-6">
-          <div className="aspect-video rounded-xl bg-muted flex items-center justify-center">
-            {data.fotos.length > 0 ? (
-              <img src={`${process.env.NEXT_PUBLIC_API_URL?.replace("/api", "") || "http://localhost:3000"}/uploads/${data.fotos[0]}`} alt={data.titulo} className="h-full w-full object-cover rounded-xl" />
-            ) : (
-              <div className="text-muted-foreground">Foto do serviço</div>
-            )}
-          </div>
+          <PhotoGallery fotos={data.fotos} titulo={data.titulo} />
 
           <div>
             <div className="flex items-start justify-between gap-4">
@@ -148,9 +144,9 @@ export default function ServicoDetalhePage() {
               <div className="flex items-center gap-1">
                 <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
                 <span className="font-medium text-foreground">{data.mediaNotas.toFixed(1)}</span>
-                <span>({data.reviews.length} avaliações)</span>
+                <span>({data.reviews.length} avaliacoes)</span>
               </div>
-              <span>•</span>
+              <span>&bull;</span>
               <span>{data.categoria}</span>
             </div>
           </div>
@@ -158,7 +154,7 @@ export default function ServicoDetalhePage() {
           <Separator />
 
           <div>
-            <h2 className="text-xl font-semibold mb-3">Descrição</h2>
+            <h2 className="text-xl font-semibold mb-3">Descricao</h2>
             <p className="text-muted-foreground leading-relaxed">{data.descricao}</p>
           </div>
 
@@ -166,11 +162,11 @@ export default function ServicoDetalhePage() {
 
           <div>
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-xl font-semibold">Avaliações</h2>
-              <Badge variant="outline">{data.reviews.length} avaliações</Badge>
+              <h2 className="text-xl font-semibold">Avaliacoes</h2>
+              <Badge variant="outline">{data.reviews.length} avaliacoes</Badge>
             </div>
             {data.reviews.length === 0 ? (
-              <p className="text-muted-foreground text-center py-8">Nenhuma avaliação ainda.</p>
+              <p className="text-muted-foreground text-center py-8">Nenhuma avaliacao ainda.</p>
             ) : (
               <div className="space-y-4">
                 {data.reviews.map((review) => (
@@ -217,38 +213,45 @@ export default function ServicoDetalhePage() {
             </CardContent>
           </Card>
 
-          <Dialog open={solicitarOpen} onOpenChange={setSolicitarOpen}>
-            <DialogTrigger>
-              <Button className="w-full h-12 text-base gap-2">
-                <Send className="h-4 w-4" />
-                Solicitar Serviço
+          {session?.user?.id === data.prestador.id ? (
+            <Link href={`/servico/${data.id}/editar`}>
+              <Button variant="outline" className="w-full h-12 text-base gap-2">
+                <Pencil className="h-4 w-4" />
+                Editar Servico
               </Button>
-            </DialogTrigger>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>Solicitar Serviço</DialogTitle>
-                <DialogDescription>Descreva o que você precisa para o prestador</DialogDescription>
-              </DialogHeader>
-              <div className="space-y-4">
-                <div className="flex items-center gap-3 p-3 rounded-lg bg-muted">
-                  <Avatar className="h-10 w-10">
-                    <AvatarFallback>{data.prestador.nome.charAt(0)}</AvatarFallback>
-                  </Avatar>
-                  <div>
-                    <p className="font-medium">{data.prestador.nome}</p>
-                    <p className="text-sm text-muted-foreground">{data.titulo}</p>
+            </Link>
+          ) : (
+            <Dialog open={solicitarOpen} onOpenChange={setSolicitarOpen}>
+              <DialogTrigger render={<Button className="w-full h-12 text-base gap-2">
+                <Send className="h-4 w-4" />
+                Solicitar Servico
+              </Button>} />
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Solicitar Servico</DialogTitle>
+                  <DialogDescription>Descreva o que voce precisa para o prestador</DialogDescription>
+                </DialogHeader>
+                <div className="space-y-4">
+                  <div className="flex items-center gap-3 p-3 rounded-lg bg-muted">
+                    <Avatar className="h-10 w-10">
+                      <AvatarFallback>{data.prestador.nome.charAt(0)}</AvatarFallback>
+                    </Avatar>
+                    <div>
+                      <p className="font-medium">{data.prestador.nome}</p>
+                      <p className="text-sm text-muted-foreground">{data.titulo}</p>
+                    </div>
                   </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="mensagem">Mensagem</Label>
+                    <Textarea id="mensagem" placeholder="Descreva o servico que precisa, endereco, data desejada..." rows={4} value={mensagem} onChange={(e) => setMensagem(e.target.value)} />
+                  </div>
+                  <Button className="w-full" onClick={handleSolicitar} disabled={enviando}>
+                    {enviando ? "Enviando..." : "Enviar Solicitacao"}
+                  </Button>
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="mensagem">Mensagem</Label>
-                  <Textarea id="mensagem" placeholder="Descreva o serviço que precisa, endereço, data desejada..." rows={4} value={mensagem} onChange={(e) => setMensagem(e.target.value)} />
-                </div>
-                <Button className="w-full" onClick={handleSolicitar} disabled={enviando}>
-                  {enviando ? "Enviando..." : "Enviar Solicitação"}
-                </Button>
-              </div>
-            </DialogContent>
-          </Dialog>
+              </DialogContent>
+            </Dialog>
+          )}
         </div>
       </div>
     </div>

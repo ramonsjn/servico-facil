@@ -3,7 +3,8 @@
 import { useState, useEffect } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
-import { Star, Shield, ArrowLeft, AlertCircle } from "lucide-react";
+import { useSession } from "next-auth/react";
+import { Star, Shield, ArrowLeft, Settings, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -27,6 +28,7 @@ interface PerfilData {
 
 export default function PerfilPrestadorPage() {
   const params = useParams();
+  const { data: session } = useSession();
   const [profile, setProfile] = useState<PerfilData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -102,7 +104,16 @@ export default function PerfilPrestadorPage() {
               <AvatarFallback className="text-2xl">{initial}</AvatarFallback>
             </Avatar>
             <div className="flex-1">
-              <h1 className="text-3xl font-bold">{profile.nome}</h1>
+              <div className="flex items-center gap-3">
+                <h1 className="text-3xl font-bold">{profile.nome}</h1>
+                {session?.user?.id === profile.id && (
+                  <Link href="/perfil/editar">
+                    <Button variant="outline" size="icon" className="h-8 w-8">
+                      <Settings className="h-4 w-4" />
+                    </Button>
+                  </Link>
+                )}
+              </div>
               <div className="flex items-center gap-2 mt-2">
                 {profile.servicos.length > 0 && <Badge variant="secondary">{profile.servicos[0]!.categoria}</Badge>}
                 <Badge variant="secondary">Membro desde {memberSince}</Badge>

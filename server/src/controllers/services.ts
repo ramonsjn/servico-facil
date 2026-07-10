@@ -145,14 +145,22 @@ export async function update(req: AuthRequest, res: Response) {
       return;
     }
 
-    const { titulo, descricao, preco, categoria, disponivel } = req.body;
-    const fotos = req.files
+    const { titulo, descricao, preco, categoria, disponivel, fotosParaManter } = req.body;
+    const novasFotos = req.files
       ? (req.files as Express.Multer.File[]).map((f) => f.filename)
-      : undefined;
+      : [];
+
+    let fotos: string[] | undefined;
+    if (novasFotos.length > 0 || fotosParaManter !== undefined) {
+      const mantidas: string[] = fotosParaManter
+        ? (Array.isArray(fotosParaManter) ? fotosParaManter : JSON.parse(fotosParaManter))
+        : service.fotos;
+      fotos = [...mantidas, ...novasFotos];
+    }
 
     const updated = await prisma.service.update({
       where: { id },
-      data: { titulo, descricao, preco, categoria, disponivel, ...(fotos && { fotos }) },
+      data: { titulo, descricao, preco, categoria, disponivel, ...(fotos !== undefined && { fotos }) },
     });
 
     res.json(updated);
