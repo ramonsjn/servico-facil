@@ -15,5 +15,11 @@ RUN npm run build
 
 RUN rm -rf src/ prisma/ tsconfig.json
 
+ENV PORT=3000
+ENV NODE_ENV=production
+ENV JWT_SECRET="qprNAfVyl0I1D+r4y8fEZsWdgUN3VBnSn5D9OaK6GhI="
+ENV JWT_REFRESH_SECRET="82VYiMMoDOEKlenRZM3dh2ICljUnQJ/OvlYLOlz6HgE="
+ENV CORS_ORIGIN="https://servico-facil.vercel.app"
+
 EXPOSE 3000
 CMD ["node", "dist/index.js"]
