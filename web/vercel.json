@@ -2,11 +2,11 @@
   "rewrites": [
     {
       "source": "/api/:path*",
-      "destination": "https://servico-facil.onrender.com/api/:path*"
+      "destination": "https://servico-facil-api.onrender.com/api/:path*"
     },
     {
       "source": "/uploads/:path*",
-      "destination": "https://servico-facil.onrender.com/uploads/:path*"
+      "destination": "https://servico-facil-api.onrender.com/uploads/:path*"
     }
   ]
 }
