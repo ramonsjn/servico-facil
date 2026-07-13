@@ -5,7 +5,7 @@
     "moduleResolution": "NodeNext",
     "rootDir": "./src",
     "outDir": "./dist",
-    "types": ["node"],
+    "types": ["node", "express", "cors", "cookie-parser", "multer", "jsonwebtoken", "bcryptjs", "nodemailer"],
     "sourceMap": true,
     "declaration": true,
     "strict": true,
