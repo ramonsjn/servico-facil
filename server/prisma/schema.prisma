@@ -1,6 +1,6 @@
 generator client {
   provider      = "prisma-client-js"
-  binaryTargets = ["native", "linux-musl-openssl-3.0.x"]
+  binaryTargets = ["native", "linux-musl-openssl-3.0.x", "linux-openssl-3.0.x"]
 }
 
 datasource db {
@@ -11,6 +11,7 @@ datasource db {
 enum UserRole {
   PRESTADOR
   CLIENTE
+  ADMIN
 }
 
 enum ContractStatus {
@@ -29,12 +30,19 @@ model User {
   role      UserRole @default(CLIENTE)
   avatarUrl String?
   descricao String?
+  consentimentoDados Boolean @default(false)
+  consentimentoEm    DateTime?
+  anonymizedAt       DateTime?
+  tokenVersion       Int     @default(0)
+  lastLoginAt        DateTime?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  servicos  Service[]
-  reviews   Review[]
-  contratos Contract[]
+  servicos             Service[]
+  reviews              Review[]
+  contratos            Contract[]          @relation("ContractCliente")
+  contratosPrestador   Contract[]          @relation("ContractPrestador")
+  passwordResetTokens  PasswordResetToken[]
 
   @@map("users")
 }
@@ -84,11 +92,52 @@ model Contract {
   updatedAt   DateTime       @updatedAt
 
   clienteId  String
-  cliente    User    @relation(fields: [clienteId], references: [id], onDelete: Cascade)
+  cliente    User    @relation("ContractCliente", fields: [clienteId], references: [id], onDelete: Cascade)
 
   prestadorId String
+  prestador   User    @relation("ContractPrestador", fields: [prestadorId], references: [id])
   servicoId   String
   servico     Service @relation(fields: [servicoId], references: [id], onDelete: Cascade)
 
+  pagamentos Payment[]
+
   @@map("contracts")
+}
+
+model Payment {
+  id            String   @id @default(uuid())
+  stripeId      String   @unique
+  status        String   @default("pending")
+  value         Float
+  contractId    String
+  contract      Contract @relation(fields: [contractId], references: [id], onDelete: Cascade)
+  clienteId     String
+  prestadorId   String
+  createdAt     DateTime @default(now())
+  paidAt        DateTime?
+
+  @@map("payments")
+}
+
+model CookieConsent {
+  id        String   @id @default(uuid())
+  userId    String?
+  consent   String
+  userAgent String?
+  ip        String?
+  createdAt DateTime @default(now())
+
+  @@map("cookie_consents")
+}
+
+model PasswordResetToken {
+  id        String   @id @default(uuid())
+  token     String   @unique
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt DateTime
+  usado     Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  @@map("password_reset_tokens")
 }
